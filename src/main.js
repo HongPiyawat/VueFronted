@@ -1,41 +1,12 @@
 import { createApp } from 'vue';
-import App from './App.vue';
-import { createRouter, createWebHistory } from 'vue-router';
+import { createPinia } from 'pinia';
+import { defineRule, ErrorMessage, Field, Form } from 'vee-validate';
+import { required, regex } from '@vee-validate/rules';
 import axios from 'axios';
 import VueAxios from 'vue-axios';
-import Home from './components/Home.vue';
-import Register from './components/Register.vue';
-import Login from './components/Login.vue';
+import App from './App.vue';
 import Navbar from './components/Navbar.vue';
-import UserProfile from './components/UserProfile.vue';
-
-const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: Home,
-  },
-  {
-    path: '/register',
-    name: 'register',
-    component: Register,
-  },
-  {
-    path: '/login',
-    name: 'login',
-    component: Login,
-  },
-  {
-    path: '/user-profile',
-    name: 'user-profile',
-    component: UserProfile, // Add UserProfile component
-  },
-];
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes,
-});
+import router from './routers';
 
 const app = createApp(App);
 
@@ -43,10 +14,20 @@ const app = createApp(App);
 app.config.globalProperties.$axios = axios;
 app.use(VueAxios, axios);
 
-// ลงทะเบียน component Navbar
+// component Navbar
 app.component('Navbar', Navbar);
 
-// ใช้ Vue Router
+// ใช้ VeeValidate components ที่นำเข้ามา
+app.component('Field', Field);
+app.component('Form', Form)
+app.component('ErrorMessage', ErrorMessage)
+
+defineRule('required', required);
+defineRule('regex', regex);
+
+// ใช้ Vue Router ที่ import มา
 app.use(router);
+
+app.use(createPinia());
 
 app.mount('#app');

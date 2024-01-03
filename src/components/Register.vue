@@ -1,22 +1,34 @@
 <template>
     <div>
       <h2 style="text-align: center;">Register</h2>
-      <form @submit.prevent="register">
+      <Form @submit="register" :validation-schema="registerSchema">
         <table style="margin: auto;">
             <tr>
                 <td>
                     <label for="username">Username:</label>
                 </td>
                 <td>
-                    <input type="text" v-model="username" required><br>
+                    <Field name="username" as="input" placeholder="ชื่อผู้ใช้"/>
+                    </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <ErrorMessage name="username" class="error-message"/>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <label for="username">Name:</label>
+                    <label for="name">Name:</label>
                 </td>
                 <td>
-                    <input type="text" v-model="name" required><br>
+                    <Field name="name" as="input" placeholder="ชื่อ นามสกุล"/>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <ErrorMessage name="name" class="error-message"/>
                 </td>
             </tr>
             <tr>
@@ -24,7 +36,13 @@
                     <label for="email">Email:</label>
                 </td>
                 <td>
-                    <input type="email" v-model="email" required><br>
+                    <Field name="email" type="email" placeholder="อีเมล"/>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <ErrorMessage name="email" class="error-message"/>
                 </td>
             </tr>
             <tr>
@@ -32,7 +50,13 @@
                     <label for="password">Password:</label>
                 </td>
                 <td>
-                    <input type="password" v-model="password" required><br>
+                    <Field name="password" type="password" placeholder="รหัสผ่าน"/>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <ErrorMessage name="password" class="error-message"/>
                 </td>
             </tr>
             <tr>
@@ -40,71 +64,79 @@
                     <label for="confirmPassword">Confirm Password:</label>
                 </td>
                 <td>
-                    <input type="password" v-model="confirmPassword" required><br>
+                    <Field name="confirmpassword" type="password" placeholder="ยืนยันรหัสผ่าน"/>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <ErrorMessage name="confirmpassword" class="error-message"/>
                 </td>
             </tr>
             <tr>
                 <td colspan="2" style="text-align: center;"><button type="submit">Register</button></td>
             </tr>
         </table>
-      </form>
+      </Form>
     </div>
   </template>
   
-  <script>
-  export default {
-    data() {
-      return {
-        username: '',
-        name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-      };
-    },
-    methods: {
-      async register() {
-        // ตรวจสอบจำนวนการกรอกข้อมูล
-        if (this.username.length < 6 || this.username.length > 24) {
-          alert('Username ควรอยู่ระหว่าง 6 ถึง 24 ตัว');
-          return;
-        }
-  
-        // ตรวจสอบรหัสผ่านที่ยืนยัน
-        if (this.password.length < 8) {
-            alert('รหัสผ่านต้องมากกว่า 8 ตัว');
-        } else {
-        if (this.password !== this.confirmPassword) {
-          alert('รหัสผ่านไม่ตรงกัน');
-          return;
-            }
-        }
-  
+  <script setup>
+    import Swal from 'sweetalert2';
+    import * as Yup from 'yup';
+    import { Form , Field, ErrorMessage } from 'vee-validate';
+    import axios from 'axios';
+    import { useRouter } from 'vue-router'
+
+    const router = useRouter()
+
+    const registerSchema = Yup.object({
+      username: Yup.string().required('กรุณากรอกชื่อผู้ใช้').matches(/^[a-zA-Z0-9]+$/, 'ชื่อผู้ใช้ควรประกอบด้วยตัวอักษร A-Z, a-z, และตัวเลขเท่านั้น').min(6,'ชื่อผู้ใช้ควรมีมากกว่า 6 ตัวขึ้นไป').max(24,'ชื่อผู้ใช้ควรมีน้อยกว่า 24 ตัว'),
+      name: Yup.string().required('กรุณากรอกชื่อและนามสกุล').min(2,'ชื่อและนามสกุลควรมีมากกว่า 2 ตัวขึ้นไป').max(100,'ชื่อและนามสกุลควรมีน้อยกว่า 100 ตัว'),
+      email: Yup.string().required('กรุณากรอกอีเมล').email('รูปแบบอีเมลไม่ถูกต้อง').max(100,'อีเมลควรมีรหัสน้อยกว่า 100 ตัว'),
+      password: Yup.string().required('กรุณากรอกรหัสผ่าน').min(8, 'รหัสผ่านควรมีอย่างน้อย 8 ตัวขึ้นไป').matches(/^(?=.*[a-zA-Z0-9])(?=.*[@$!%*?&])[a-zA-Z0-9@$!%*?&]+$/,'รหัสผ่านควรมีตัวอักษรพิเศษอย่างน้อย 1 ตัว'),
+      confirmpassword: Yup.string().required('กรุณากรอกรหัสผ่าน').oneOf([Yup.ref('password'), null], 'รหัสผ่านไม่ตรงกัน'),
+    });
+
+    const register = async ( value ) => {
         try {
-          const response = await this.$axios.post('http://localhost:8000/api/auth/register', {
-            username: this.username,
-            name: this.name,
-            email: this.email,
-            password: this.password,
-            password_confirmation: this.confirmPassword,
-            // ตัวแปรใหม่เพื่อเก็บข้อความแสดงผล
-            message: '',
-          });
-  
-        console.log(response.data); // โชว์ข้อมูลการสมัครสมาชิกใน console log
+            const response = await axios.post('http://localhost:8000/api/auth/register', {
+                username: value.username,
+                name: value.name,
+                email: value.email,
+                password: value.password,
+                password_confirmation: value.confirmpassword,
+            });
 
-        // ตัวแปรใหม่เพื่อเก็บข้อความแสดงผล
-        if (response.data.message) {
-        this.message = response.data.message;
-        }
+            if (response.data.success === '') {
+                await Swal.fire({
+                icon: 'success',
+                title: 'สมัครสมาชิกสำเร็จ',
+                text: response.data.message,
+            });
 
-        // เมื่อลงทะเบียนสำเร็จ, ให้เปลี่ยนหน้าไปยังหน้า Home
-        this.$router.push({ name: 'home', query: { message: this.message } });
+            router.push({ name: 'home' });
+            } else {
+                await Swal.fire({
+                icon: 'error',
+                title: 'สมัครสมาชิกล้มเหลว',
+                text: 'สมัครสมาชิกไม่สำเร็จ',
+                });
+            }
         } catch (error) {
-          console.error('Error registering:', error); // Handle error
+            await Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาดในการสมัครสมาชิก',
+            text: 'มีชื่อผู้ใช้ซ้ำ',
+            });
         }
-      },
-    },
-  };
+      };
   </script>
+  <style scoped>
+  .error-message {
+      color: red;
+      font-size: small;
+  }
+
+</style>
   

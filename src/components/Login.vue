@@ -1,72 +1,105 @@
 <template>
     <div>
-      <h2 style="text-align: center;">Login</h2>
-      <form @submit.prevent="login">
-        <p style="text-align: center;">{{ message }}</p>
+      <h2 style="text-align: center;">เข้าสู่ระบบ</h2>
+      <Form @submit="login" :validation-schema="loginSchema">
         <table style="margin: auto;">
-            <tr>
-                <td>
-                    <label for="username">Username:</label>
-                </td>
-                <td>
-                    <input type="text" v-model="username" required><br>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="password">Password:</label>
-                </td>
-                <td>
-                    <input type="password" v-model="password" required><br>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" style="text-align: center;"><button type="submit">Login</button></td>
-            </tr>
+          <tr>
+            <td>
+              <label for="username">ชื่อผู้ใช้:</label>
+            </td>
+            <td>
+                <Field name="username" as="input" placeholder="ชื่อผู้ใช้"/>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>
+                <ErrorMessage name="username" class="error-message"/>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label for="password">รหัสผ่าน:</label>
+            </td>
+            <td>
+                <Field name="password" type="password" placeholder="รหัสผ่าน"/>
+            </td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>
+                <ErrorMessage name="password" class="error-message"/>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" style="text-align: center;">
+              <button type="submit">เข้าสู่ระบบ</button>
+            </td>
+          </tr>
         </table>
-      </form>
+      </Form>
     </div>
   </template>
   
-  <script>
-  export default {
-    data() {
-      return {
-        username: '',
-        password: '',
-        message: '',
-      };
-    },
-    methods: {
-      async login() {
-        try {
-          const response = await this.$axios.post('http://localhost:8000/api/auth/login', {
-            username: this.username,
-            password: this.password,
-          });
+  <script setup>
+  import Swal from 'sweetalert2';
+  import * as Yup from 'yup';
+  import { Form , Field, ErrorMessage } from 'vee-validate';
+  import axios from 'axios';
+  import { useRouter } from 'vue-router'
+  import { useAuthStore } from '../stores/Auth.js';
   
-          const token = response.data.access_token;
-          localStorage.setItem('token', token);
+  const authStore = useAuthStore();
+  const loginSchema = Yup.object({
+      username: Yup.string().required('กรุณากรอกชื่อผู้ใช้').min(6,'ชื่อผู้ใช้ควรมีรหัสมากกว่า 6 ตัวขึ้นไป'),
+      password: Yup.string().required('กรุณากรอกรหัสผ่าน').min(8, 'รหัสผ่านควรมีอย่างน้อย 8 ตัวขึ้นไป'),
+    });
 
-          console.log(response.data); 
-  
-          if (response.data.success == "") {
-            console.log('Login successful');
-            this.$router.push({ name: 'home', query: { message: response.data.message } });
-          } else {
-            console.log('Login failed:', 'เข้าสู่ระบบไม่สำเร็จ');
-          }
-        } catch (error) {
-          console.error('Error logging in:', error);
-          this.message = 'Error logging in. Please try again.';
+    const router = useRouter()
+
+    const login = async ( value ) => {
+      try {
+
+        const response = await axios.post('http://localhost:8000/api/auth/login', {
+          username: value.username,
+          password: value.password,
+        });
+
+        const token = response.data.access_token;
+        authStore.setToken(token);
+
+        if (response.data.success === '') {
+          await Swal.fire({
+            icon: 'success',
+            title: 'เข้าสู่ระบบสำเร็จ',
+            text: response.data.message,
+          });
+
+          router.push({ name: 'home' });
+        } else {
+          await Swal.fire({
+            icon: 'error',
+            title: 'เข้าสู่ระบบล้มเหลว',
+            text: 'เข้าสู่ระบบไม่สำเร็จ',
+          });
         }
-      },
-    },
-  };
+      } catch (error) {
+        console.error('เกิดข้อผิดพลาดในการเข้าสู่ระบบ:', error);
+
+        await Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ',
+          text: 'กรุณาลองอีกครั้ง',
+        });
+      }
+    };
   </script>
   
   <style scoped>
-  /* Add your styling for the login form here */
+    .error-message {
+        color: red;
+        font-size: small;
+    }
+
   </style>
-  
   

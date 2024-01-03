@@ -1,34 +1,22 @@
 <!-- Navbar.vue -->
 <template>
     <nav class="navbar">
-        <router-link to="/">Home</router-link>
-        <router-link to="/register" v-if="isUnAuthenticated">Register</router-link>
-        <router-link to="/login" v-if="isUnAuthenticated">Login</router-link>
-        <router-link to="/user-profile" v-if="isAuthenticated">User Profile</router-link>
-        <button v-if="isAuthenticated" @click="logout">Logout</button>
+      <router-link to="/">Home</router-link>
+      <router-link to="/register" v-if="!authStore.token">Register</router-link>
+      <router-link to="/login" v-if="!authStore.token">Login</router-link>
+      <router-link to="/user-profile" v-if="authStore.token">User Profile</router-link>
+      <button v-if="authStore.token" @click="logout">Logout</button>
     </nav>
 </template>
 
-<script>
-export default {
-    computed: {
-        isAuthenticated() {
-            const isAuthenticated = !!localStorage.getItem('token');
-        return isAuthenticated;
-        },
-        isUnAuthenticated() {
-            const isUnAuthenticated =! !!localStorage.getItem('token');
-        return isUnAuthenticated;
-        },
-    },
-    methods: {
-        logout() {
-            console.log('Before removal:', localStorage.getItem('token'));
-            localStorage.removeItem('token');
-            console.log('After removal:', localStorage.getItem('token'));
-            this.$router.push({ name: 'login' });
-        },
-    },
+<script setup>
+import { useAuthStore } from '../stores/Auth.js';
+import { useRouter } from 'vue-router'
+const router = useRouter();
+const authStore = useAuthStore();
+const logout = () => {
+    authStore.clearToken();
+    router.push({ name: 'home' });
 };
 </script>
 

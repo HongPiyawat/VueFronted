@@ -11,40 +11,34 @@
     </div>
   </template>
   
-  <script>
-  export default {
-    data() {
-      return {
-        user: null,
-      };
-    },
-    mounted() {
-      this.fetchUserData();
-    },
-    methods: {
-      fetchUserData() {
-        const token = localStorage.getItem('token');
-  
-        if (token) {
+  <script setup>
+    import { ref, onMounted } from 'vue';
+    import { useAuthStore } from '../stores/Auth';
+    import axios from 'axios';
 
-          const apiUrl = 'http://localhost:8000/api/auth/user-profile';
-  
-          this.$axios.get(apiUrl, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          })
-          .then(response => {
-            this.user = response.data;
-          })
-          .catch(error => {
+    const authStore = useAuthStore();
+    const getUserProfile = async () => {
+        const token = authStore.token;
+        if (token) {
+            try {
+                const response = await axios.get('http://localhost:8000/api/auth/user-profile', {
+                    headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            user.value = response.data;
+        } catch (error) {
             console.error('Error fetching user data:', error);
-          });
         }
-      },
-    },
-  };
-  </script>
+    }
+    };
+
+    const user = ref(null);
+
+    onMounted(() => {
+    getUserProfile();
+    });
+</script>
   
   <style scoped>
   /* Add component styles here */
