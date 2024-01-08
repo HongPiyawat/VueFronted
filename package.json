@@ -8,6 +8,7 @@
   "dependencies": {
     "@vee-validate/rules": "^4.12.4",
     "axios": "^1.6.3",
+    "crypto-js": "^4.2.0",
     "pinia": "^2.1.7",
     "sweetalert2": "^11.10.2",
     "vee-validate": "^4.12.4",

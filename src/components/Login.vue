@@ -48,8 +48,11 @@
   import axios from 'axios';
   import { useRouter } from 'vue-router'
   import { useAuthStore } from '../stores/Auth.js';
+  import { usePermissionStore } from '../stores/Permission.js';
+
   
   const authStore = useAuthStore();
+  const permissionStore = usePermissionStore();
   const loginSchema = Yup.object({
       username: Yup.string().required('กรุณากรอกชื่อผู้ใช้').min(6,'ชื่อผู้ใช้ควรมีรหัสมากกว่า 6 ตัวขึ้นไป'),
       password: Yup.string().required('กรุณากรอกรหัสผ่าน').min(8, 'รหัสผ่านควรมีอย่างน้อย 8 ตัวขึ้นไป'),
@@ -68,14 +71,17 @@
         const token = response.data.access_token;
         authStore.setToken(token);
 
-        if (response.data.success === '') {
-          await Swal.fire({
-            icon: 'success',
-            title: 'เข้าสู่ระบบสำเร็จ',
-            text: response.data.message,
-          });
+        const Permission = response.data.permissions;
+        permissionStore.setPermissions(Permission);
 
-          router.push({ name: 'home' });
+        if (response.data.success === '') {
+            await Swal.fire({
+                icon: 'success',
+                title: 'เข้าสู่ระบบสำเร็จ',
+                text: response.data.message,
+            });
+
+            router.push({ name: 'home' });
         } else {
           await Swal.fire({
             icon: 'error',

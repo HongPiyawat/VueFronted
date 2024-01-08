@@ -124,6 +124,7 @@
                 });
             }
         } catch (error) {
+            console.error('Error:', error);
             await Swal.fire({
             icon: 'error',
             title: 'เกิดข้อผิดพลาดในการสมัครสมาชิก',
